@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Exchange_Rate.MainPage"
+    x:Name="RootPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="iCurrency Converter">
+
+    <!-- 상단 툴바 + 버튼 -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+ Add"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding AddCurrencyCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style TargetType="Label">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+            </Style>
+            <!-- 서브 텍스트 색 -->
+            <Color x:Key="SubtleText" x:FactoryMethod="FromArgb">
+                <x:Arguments>
+                    <x:String>666666</x:String>
+                </x:Arguments>
+            </Color>
+            <Color x:Key="SubtleTextDark" x:FactoryMethod="FromArgb">
+                <x:Arguments>
+                    <x:String>AAAAAA</x:String>
+                </x:Arguments>
+            </Color>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- 헤더: 기준 통화 + 금액 입력 -->
+        <Grid Grid.Row="0"
+              Padding="16,12"
+              ColumnDefinitions="Auto,*,Auto"
+              ColumnSpacing="12">
+
+            <!-- 깃발: Frame → Border 로 교체 -->
+            <Border WidthRequest="44"
+                    HeightRequest="28"
+                    StrokeThickness="0"
+                    BackgroundColor="Transparent"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Start">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <Image Source="{Binding BaseCurrency.Flag}" Aspect="AspectFill" />
+            </Border>
+
+            <!-- 코드/이름 -->
+            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                <Label Text="{Binding BaseCurrency.Code}" FontAttributes="Bold" />
+                <Label FontSize="12"
+                       Text="{Binding BaseCurrency.Name}"
+                       TextColor="{AppThemeBinding Light={StaticResource SubtleText}, Dark={StaticResource SubtleTextDark}}" />
+            </VerticalStackLayout>
+
+            <!-- 입력 금액 -->
+            <Entry Grid.Column="2"
+                   WidthRequest="140"
+                   Keyboard="Numeric"
+                   HorizontalTextAlignment="End"
+                   Text="{Binding BaseAmount, Mode=TwoWay, StringFormat='{}{0:0.##}'}"
+                   Placeholder="1.00" />
+        </Grid>
+
+        <!-- 본문: 통화 리스트 -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Currencies}"
+                        SelectionMode="None"
+                        Margin="0,4,0,0">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="24" Spacing="8" HorizontalOptions="Center">
+                    <Label Text="No currencty to show." />
+                    <Button Text="Add currency"
+                            Command="{Binding AddCurrencyCommand}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <!-- 우→좌 스와이프 삭제 -->
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="IndianRed"
+                                           Command="{Binding BindingContext.DeleteCurrencyCommand, Source={x:Reference RootPage}}"
+                                           CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- 셀 내용 -->
+                        <Grid Padding="16,8"
+                              ColumnDefinitions="44,*,Auto"
+                              ColumnSpacing="12">
+
+                            <!-- 깃발: Frame → Border -->
+                            <Border WidthRequest="44"
+                                    HeightRequest="28"
+                                    StrokeThickness="0"
+                                    BackgroundColor="Transparent"
+                                    VerticalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Image Source="{Binding Flag}" Aspect="AspectFill" />
+                            </Border>
+
+                            <!-- 코드/이름 -->
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding Code}" FontAttributes="Bold" />
+                                <Label FontSize="12"
+                                       Text="{Binding Name}"
+                                       TextColor="{AppThemeBinding Light={StaticResource SubtleText}, Dark={StaticResource SubtleTextDark}}" />
+                            </VerticalStackLayout>
+
+                            <!-- 환산 금액/환율 -->
+                            <VerticalStackLayout Grid.Column="2"
+                                                 Spacing="2"
+                                                 HorizontalOptions="End">
+                                <Label FontAttributes="Bold"
+                                       HorizontalTextAlignment="End"
+                                       Text="{Binding ConvertedAmount, StringFormat='{}{0:0.##}'}" />
+                                <Label FontSize="12"
+                                       HorizontalTextAlignment="End"
+                                       TextColor="{AppThemeBinding Light={StaticResource SubtleText}, Dark={StaticResource SubtleTextDark}}"
+                                       Text="{Binding RateDisplay}" />
+                            </VerticalStackLayout>
+
+                            <!-- 셀 탭: 기준 통화로 변경 -->
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.SetBaseCurrencyCommand, Source={x:Reference RootPage}}"
+                                    CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- 하단 + 버튼 -->
+        <Grid Grid.Row="2" Padding="16" BackgroundColor="{AppThemeBinding Light=#00000010, Dark=#FFFFFF10}">
+            <Button Text="Add currency"
+                    Command="{Binding AddCurrencyCommand}"
+                    HorizontalOptions="Fill"
+                    CornerRadius="12" />
+        </Grid>
+    </Grid>
+</ContentPage>
